@@ -9,8 +9,8 @@ console = Console()
 # Initalize Subcommands
 from provider import provider_app
 app.add_typer(provider_app, name="provider")
-from server import server_app
-app.add_typer(server_app, name="server")
+from repo import server_app
+app.add_typer(server_app, name="repo")
 
 VERSION = "0.1.0"
 
