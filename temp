@@ -1,0 +1,33 @@
+###
+@repo_app.command("save")
+def create_commit(message: str | None = None):
+    config = load_config()
+    if message is None:
+        message = datetime.datetime.now().strftime("commit-%Y-%m-%d_%H:%M:%S")
+
+    if not config.get("git-credentials-globally-set"):
+        set_git_credentials()
+
+    
+    try:
+        subprocess.run(
+            ["git", "add", "."],
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        subprocess.run(
+            ["git", "commit", "-m", message],
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        console.print("[green]Changes committed[/green]")
+    except subprocess.CalledProcessError as e:
+        console.print("[red]Failed to commit changes[/red]")
+        console.print(e.stderr)
+###
+
+
+    if path.endswith(".git"):
+        path = path[:-4]

@@ -7,9 +7,10 @@ app = typer.Typer()
 console = Console()
 
 # Initalize Subcommands
-from repo import repo_app
-app.add_typer(repo_app, name="repo")
-
+from provider import provider_app
+app.add_typer(provider_app, name="provider")
+from server import server_app
+app.add_typer(server_app, name="server")
 
 VERSION = "0.1.0"
 
@@ -24,9 +25,7 @@ BRAND = r"""
 
 def show_home():
     console.print(Panel.fit(BRAND, title="ArcCLI", subtitle=f"v{VERSION}"))
-    console.print("repo set <url>")
-    console.print("repo show")
-    console.print("version")
+    console.print("PLACEHOLDER")
 
 
 @app.callback(invoke_without_command=True)
@@ -39,6 +38,9 @@ def main(ctx: typer.Context):
 def version():
     console.print(f"ArcCLI v{VERSION}")
 
-
+@app.command()
+def about():
+    show_home()
+    
 if __name__ == "__main__":
     app()
