@@ -16,9 +16,12 @@ console = Console()
 @server_app.command("current")
 def show_current_server():
     show_server()
+
+@server_app.command("download")
+def download_server():
+    update_local_server()
     
-    
-@server_app.command("update-local")
+@server_app.command("fetch")
 def update_local_server():
     repo_url = config.load_config().get("server_address")
     if repo_url is None:
@@ -34,6 +37,7 @@ def update_local_server():
         console.print(f"Downloading local repository at {repository_path}")
         clone_server_repo(config.get_keyring("https://github.com"), repo_url)
         return
+
 
 def clone_server_repo(token: str, repo_url: str):
     token = config.get_keyring("https://github.com")
@@ -51,3 +55,32 @@ def clone_server_repo(token: str, repo_url: str):
     
     subprocess.run(["git", "clone", repo_url, str(download_path)], check=True)
     
+    
+@server_app.command("save")
+def save_server():
+    repo_url = config.load_config().get("server_address")
+    if repo_url is None:
+        console.print("No server repository set. Please run 'arc server select' first.")
+        return
+    url_path = urlparse(repo_url).path.strip("/")
+    user, repo = url_path.split("/")[:2]
+    repository_path = config.DATA_DIR / "repositories" / user / repo
+    if not repository_path.exists():
+        console.print(f"Local repository not found at {repository_path}. Please run 'arc server fetch' first.")
+        return
+    subprocess.run(["git", "-C", str(repository_path), "add", "."], check=True)
+    subprocess.run(["git", "-C", str(repository_path), "commit", "-m", f"ArcHost Server Hosting Change - {datetime.datetime.now()}"], check=True)
+    
+@server_app.command("upload")
+def upload_changes():
+    repo_url = config.load_config().get("server_address")
+    if repo_url is None:
+        console.print("No server repository set. Please run 'arc server select' first.")
+        return
+    url_path = urlparse(repo_url).path.strip("/")
+    user, repo = url_path.split("/")[:2]
+    repository_path = config.DATA_DIR / "repositories" / user / repo
+    if not repository_path.exists():
+        console.print(f"Local repository not found at {repository_path}. Please run 'arc server fetch' first.")
+        return
+    subprocess.run(["git", "-C", str(repository_path), "push"], check=True)
