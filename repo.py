@@ -1,13 +1,12 @@
 # Arc CLI - Provider management
-import subprocess
 import typer
 from rich.console import Console
 import config 
 import datetime
+import github_api
 
 server_app = typer.Typer()
-console = Console()
-import github_api  
+console = Console()  
 
 def set_server(server_address: str):
     if server_address.endswith(".git"):

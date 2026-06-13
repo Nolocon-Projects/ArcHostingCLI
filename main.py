@@ -11,6 +11,8 @@ from provider import provider_app
 app.add_typer(provider_app, name="provider")
 from repo import server_app
 app.add_typer(server_app, name="repo")
+from server import server_app
+app.add_typer(server_app, name="server")
 
 VERSION = "0.1.0"
 

@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import keyring
 
-DATA_DIR = Path.home() / ".arccli"
+DATA_DIR = Path.home() / ".arcHost"
 CONFIG_FILE = DATA_DIR / "config.json"
 
 

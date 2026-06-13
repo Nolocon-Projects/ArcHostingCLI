@@ -1,13 +1,10 @@
-from logging import config
 import time
 import requests
 import webbrowser
 import platform
 import subprocess
 import shutil
-import typer
 from rich.console import Console
-import config
 from urllib.parse import urlparse
 
 CLIENT_ID = "Ov23liAVBP84OXx02dwF"
