@@ -14,11 +14,25 @@ def load_config():
         return json.loads(CONFIG_FILE.read_text())
     except Exception:
         return {}
+import json
 
-def save_config(data: dict):
+def save_config(updates: dict):
     CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
-    CONFIG_FILE.write_text(json.dumps(data, indent=4))
-    CONFIG_FILE.write_text(json.dumps(data, indent=4))
+
+    # Vorhandene Config laden
+    if CONFIG_FILE.exists():
+        try:
+            config = json.loads(CONFIG_FILE.read_text())
+        except (json.JSONDecodeError, OSError):
+            config = {}
+    else:
+        config = {}
+
+    # Neue Werte einfügen/überschreiben
+    config.update(updates)
+
+    # Gesamte Config zurückschreiben
+    CONFIG_FILE.write_text(json.dumps(config, indent=4))
 
 
 def save_keyring(name: str, key: str):
@@ -29,3 +43,6 @@ def get_keyring(name: str) -> str:
     if value is None:
         raise ValueError(f"Key '{name}' not found in keyring")
     return value
+
+def delete_keyring(name: str):
+    keyring.delete_password("ArcHosting", name)

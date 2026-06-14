@@ -1,4 +1,6 @@
 # Arc CLI - A command-line tool for managing Arc repositories
+from urllib.parse import urlparse
+
 import typer
 from rich.console import Console
 from rich.panel import Panel
@@ -9,7 +11,11 @@ console = Console()
 # Initalize Subcommands
 from provider import provider_app
 app.add_typer(provider_app, name="provider")
-from server import server_app
+
+
+from server_app import server_app
+import server_manager
+import server_runner
 app.add_typer(server_app, name="server")
 
 VERSION = "0.1.0"
@@ -41,6 +47,6 @@ def version():
 @app.command()
 def about():
     show_home()
-    
+
 if __name__ == "__main__":
     app()

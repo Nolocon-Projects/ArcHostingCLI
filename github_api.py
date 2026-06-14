@@ -178,3 +178,28 @@ def invite_collaborator(token: str, repo_url: str, username: str, permission: st
         print("BODY:", r.text)
 
     r.raise_for_status()
+
+def get_github_username(token: str) -> str:
+    """
+    Returns the GitHub username for a given personal access token.
+    """
+
+    if not token:
+        raise ValueError("Token is required")
+
+    url = "https://api.github.com/user"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json"
+    }
+
+    response = requests.get(url, headers=headers)
+
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"GitHub API error {response.status_code}: {response.text}"
+        )
+
+    data = response.json()
+
+    return data.get("login")

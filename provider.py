@@ -32,6 +32,7 @@ def show_provider():
 def init_provider_cfg(provider_url: str, token):
     provider_cfg = {
         "provider_url": provider_url,
+        "username": github_api.get_github_username(token),
         "last_updated": datetime.datetime.now().isoformat()
     }
     config.save_keyring(provider_url, token)
@@ -64,3 +65,6 @@ def init_provider():
         
     init_provider_cfg(provider_url, token)
     console.print("Provider initialized with provider URL and token")
+    
+def delete_token(provider_url):
+    config.delete_keyring(provider_url)

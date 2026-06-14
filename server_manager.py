@@ -1,13 +1,11 @@
-# Arc CLI - Provider management
+# Arc CLI - Server
 import subprocess
-from urllib.parse import urlparse
 import typer
 from rich.console import Console
 import config 
 import datetime
 import github_api
-
-server_app = typer.Typer()
+from server_app import server_app, repo_url_to_name
 console = Console()  
 
 @server_app.callback(invoke_without_command=True)
@@ -19,6 +17,17 @@ def main(ctx: typer.Context):
 def set_server_command(server_address):
     set_server(server_address)
     console.print(f"Server address set to: {server_address}")
+    # Check if local Snapshot exists
+    repo_url = config.load_config().get("server_address")
+    if repo_url is None:
+        console.print("No server repository set. Please run 'arc server select' first.")
+        return
+    user, repo = repo_url_to_name(repo_url)
+    repository_path = config.DATA_DIR / "repositories" / user / repo
+    if repository_path.exists():
+        console.print(f"Local repository already exists at {repository_path}")
+    else:
+        console.print(f"No local repository found at {repository_path}. You can run 'arc server fetch' to download the repository.")
 
 def set_server(server_address: str):
     if server_address.endswith(".git"):
@@ -29,6 +38,16 @@ def set_server(server_address: str):
     }
     config.save_config(cfg)
     
+@server_app.command("deselect")
+def deselect_server():
+    cfg = config.load_config()
+    if "server_address" in cfg:
+        del cfg["server_address"]
+        config.save_config(cfg)
+        console.print("Server address deselected.")
+    else:
+        console.print("No server address set.")
+
 @server_app.command("current")
 def show_current_server():
     show_server()
@@ -47,8 +66,7 @@ def update_local_server():
     if repo_url is None:
         console.print("No server repository set. Please run 'arc server select' first.")
         return
-    url_path = urlparse(repo_url).path.strip("/")
-    user, repo = url_path.split("/")[:2]
+    user, repo = repo_url_to_name(repo_url)
     repository_path = config.DATA_DIR / "repositories" / user / repo
     if repository_path.exists():
         console.print(f"Updating local repository at {repository_path}")
@@ -71,8 +89,7 @@ def clone_server_repo(token: str, repo_url: str):
         console.print("No server repository set. Please run 'arc server select' first.")
         return
     
-    url_path = urlparse(repo_url).path.strip("/")
-    user, repo = url_path.split("/")[:2]
+    user, repo = repo_url_to_name(repo_url)
 
     download_path = config.DATA_DIR / "repositories" / user / repo
     
@@ -113,18 +130,21 @@ def invite_user(username: str):
     
 @server_app.command("save")
 def save_server():
+    commit_changes("Arc Server Execution Changes")
+
+
+def commit_changes(message: str = "No commit message provided"):
     repo_url = config.load_config().get("server_address")
     if repo_url is None:
         console.print("No server repository set. Please run 'arc server select' first.")
         return
-    url_path = urlparse(repo_url).path.strip("/")
-    user, repo = url_path.split("/")[:2]
+    user, repo = repo_url_to_name(repo_url)
     repository_path = config.DATA_DIR / "repositories" / user / repo
     if not repository_path.exists():
         console.print(f"Local repository not found at {repository_path}. Please run 'arc server fetch' first.")
         return
     subprocess.run(["git", "-C", str(repository_path), "add", "."], check=True)
-    subprocess.run(["git", "-C", str(repository_path), "commit", "-m", f"ArcHost Server Hosting Change - {datetime.datetime.now()}"], check=True)
+    subprocess.run(["git", "-C", str(repository_path), "commit", "-m", f"{message} - {datetime.datetime.now()}"], check=True)
     
 @server_app.command("upload")
 def upload_changes():
@@ -132,8 +152,7 @@ def upload_changes():
     if repo_url is None:
         console.print("No server repository set. Please run 'arc server select' first.")
         return
-    url_path = urlparse(repo_url).path.strip("/")
-    user, repo = url_path.split("/")[:2]
+    user, repo = repo_url_to_name(repo_url)
     repository_path = config.DATA_DIR / "repositories" / user / repo
     if not repository_path.exists():
         console.print(f"Local repository not found at {repository_path}. Please run 'arc server fetch' first.")
