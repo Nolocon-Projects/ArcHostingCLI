@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 import typer
 from rich.console import Console
 from rich.panel import Panel
-
+from constants import *
 app = typer.Typer()
 console = Console()
 
@@ -18,7 +18,6 @@ import server_manager
 import server_runner
 app.add_typer(server_app, name="server")
 
-VERSION = "0.1.0"
 
 BRAND = r"""
   ▄▄▄▄                ▄▄▄▄▄▄▄ ▄▄▄      ▄▄▄▄▄
@@ -30,7 +29,7 @@ BRAND = r"""
 
 
 def show_home():
-    console.print(Panel.fit(BRAND, title="ArcCLI", subtitle=f"v{VERSION}"))
+    console.print(Panel.fit(BRAND, title="ArcCLI", subtitle=f"v{app_version}"))
     console.print("PLACEHOLDER")
 
 
@@ -42,7 +41,7 @@ def main(ctx: typer.Context):
 
 @app.command()
 def version():
-    console.print(f"ArcCLI v{VERSION}")
+    console.print(f"ArcCLI v{app_version}")
 
 @app.command()
 def about():

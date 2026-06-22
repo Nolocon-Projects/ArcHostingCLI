@@ -48,23 +48,33 @@ def load_provider_cfg():
 
 
 @provider_app.command("setup")
-def init_provider():
-    provider_url = console.input("Default Upload Provider: (Leave blank for default): ")
-    if not provider_url:
-        provider_url = "https://github.com"
+def init_provider(
+    provider: str | None = None,
+    token: str | None = None,
+):
+    if provider is None:
+        provider = console.input(
+            "Default Upload Provider: (Leave blank for default): "
+        )
+
+    if not provider:
+        provider = "https://github.com"
+
+    provider = provider.rstrip("/")
+
+    if provider == "https://github.com":
+        if token is None:
+            token = github_api.prompt_github_token_oauth()
     else:
-        console.print(f"Sorry, custom providers aren't supported yet.")
-        return
-    if provider_url.endswith("/"):
-        provider_url = provider_url[:-1]
-        
-    if provider_url == "https://github.com":
-        token = github_api.prompt_github_token_oauth()
-    else:
-        token = console.input("Personal Access Token: (Leave blank for none): ")
-        
-    init_provider_cfg(provider_url, token)
-    console.print("Provider initialized with provider URL and token")
-    
+        if token is None:
+            token = console.input(
+                "Personal Access Token: (Leave blank for none): "
+            )
+
+    init_provider_cfg(provider, token)
+
+    console.print(
+        "Provider initialized with provider URL and token"
+    )
 def delete_token(provider_url):
     config.delete_keyring(provider_url)

@@ -1,4 +1,5 @@
 # Arc CLI - Server
+import json
 import subprocess
 import typer
 from rich.console import Console
@@ -6,7 +7,8 @@ import config
 import datetime
 import github_api
 from server_app import server_app, repo_url_to_name
-console = Console()  
+from constants import *
+console = Console()
 
 @server_app.callback(invoke_without_command=True)
 def main(ctx: typer.Context):
@@ -24,10 +26,6 @@ def set_server_command(server_address):
         return
     user, repo = repo_url_to_name(repo_url)
     repository_path = config.DATA_DIR / "repositories" / user / repo
-    if repository_path.exists():
-        console.print(f"Local repository already exists at {repository_path}")
-    else:
-        console.print(f"No local repository found at {repository_path}. You can run 'arc server fetch' to download the repository.")
 
 def set_server(server_address: str):
     if server_address.endswith(".git"):
@@ -98,17 +96,56 @@ def clone_server_repo(token: str, repo_url: str):
     
     
 @server_app.command("create")
-def create_server_repo():
+def create_server_repo(
+    name: str | None = None,
+):
     token = config.get_keyring("https://github.com")
+
     if token is None:
-        console.print("GitHub token not found. Please run 'arc provider setup' first.")
+        console.print(
+            "GitHub token not found. Please run 'arc provider setup' first."
+        )
         return
-    name = console.input("Server Repository Name: ")
-    server_address = github_api.create_github_repo(token, name, private=True)
-    console.print(f"Server Repository created: {server_address}")
+
+    if name is None:
+        name = console.input("Server Repository Name: ")
+
+    server_address = github_api.create_github_repo(
+        token,
+        name,
+        private=True
+    )
+
+    console.print(
+        f"Server Repository created: {server_address}"
+    )
+
     set_server(server_address)
-    
-    
+    update_local_server()
+
+    owner, repo = repo_url_to_name(server_address)
+
+    file = (
+        config.DATA_DIR
+        / "repositories"
+        / owner
+        / repo
+        / "arcHost.config"
+    )
+
+    file_data = {
+        "version": app_version,
+    }
+
+    file.write_text(
+        json.dumps(file_data, indent=4),
+        encoding="utf-8"
+    )
+
+    commit_changes("Base ArcHost Config Creation")
+    upload_changes()
+
+    console.print("Server repository initialized.")
 @server_app.command("invite")
 def invite_user(username: str):
     repo_url = config.load_config().get("server_address")
@@ -128,6 +165,7 @@ def invite_user(username: str):
     console.print(f"{repo_url}/invitations")
     console.print("Note: The invitation will expire after 7 days if not accepted.")
     
+
 @server_app.command("save")
 def save_server():
     commit_changes("Arc Server Execution Changes")
