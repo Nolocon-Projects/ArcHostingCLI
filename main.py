@@ -29,7 +29,7 @@ BRAND = r"""
 
 
 def show_home():
-    console.print(Panel.fit(BRAND, title="ArcCLI", subtitle=f"v{app_version}"))
+    console.print(Panel.fit(BRAND, title="ArcCLI", subtitle=f"v{APP_VERSION}"))
     console.print("PLACEHOLDER")
 
 
@@ -41,7 +41,7 @@ def main(ctx: typer.Context):
 
 @app.command()
 def version():
-    console.print(f"ArcCLI v{app_version}")
+    console.print(f"ArcCLI v{APP_VERSION}")
 
 @app.command()
 def about():

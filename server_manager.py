@@ -20,7 +20,7 @@ def set_server_command(server_address):
     set_server(server_address)
     console.print(f"Server address set to: {server_address}")
     # Check if local Snapshot exists
-    repo_url = config.load_config().get("server_address")
+    repo_url = config.load_config(CONFIG_FILE).get("server_address")
     if repo_url is None:
         console.print("No server repository set. Please run 'arc server select' first.")
         return
@@ -34,14 +34,14 @@ def set_server(server_address: str):
         "server_address": server_address,
         "last_updated": datetime.datetime.now().isoformat()
     }
-    config.save_config(cfg)
+    config.save_config(CONFIG_FILE, cfg)
     
 @server_app.command("deselect")
 def deselect_server():
-    cfg = config.load_config()
+    cfg = config.load_config(CONFIG_FILE)
     if "server_address" in cfg:
         del cfg["server_address"]
-        config.save_config(cfg)
+        config.save_config(CONFIG_FILE, cfg)
         console.print("Server address deselected.")
     else:
         console.print("No server address set.")
@@ -51,7 +51,7 @@ def show_current_server():
     show_server()
 
 def show_server():
-    server_address = config.load_config().get("server_address")
+    server_address = config.load_config(CONFIG_FILE).get("server_address")
 
     if server_address:
         console.print(f"Current Server Address: {server_address}")
@@ -60,7 +60,7 @@ def show_server():
     
 @server_app.command("fetch")
 def update_local_server():
-    repo_url = config.load_config().get("server_address")
+    repo_url = config.load_config(CONFIG_FILE).get("server_address")
     if repo_url is None:
         console.print("No server repository set. Please run 'arc server select' first.")
         return
@@ -134,7 +134,7 @@ def create_server_repo(
     )
 
     file_data = {
-        "version": app_version,
+        "version": APP_VERSION,
     }
 
     file.write_text(
@@ -148,7 +148,7 @@ def create_server_repo(
     console.print("Server repository initialized.")
 @server_app.command("invite")
 def invite_user(username: str):
-    repo_url = config.load_config().get("server_address")
+    repo_url = config.load_config(CONFIG_FILE).get("server_address")
     permission = "push"
     token = config.get_keyring("https://github.com")
     if token is None:
@@ -172,7 +172,7 @@ def save_server():
 
 
 def commit_changes(message: str = "No commit message provided"):
-    repo_url = config.load_config().get("server_address")
+    repo_url = config.load_config(CONFIG_FILE).get("server_address")
     if repo_url is None:
         console.print("No server repository set. Please run 'arc server select' first.")
         return
@@ -186,7 +186,7 @@ def commit_changes(message: str = "No commit message provided"):
     
 @server_app.command("upload")
 def upload_changes():
-    repo_url = config.load_config().get("server_address")
+    repo_url = config.load_config(CONFIG_FILE).get("server_address")
     if repo_url is None:
         console.print("No server repository set. Please run 'arc server select' first.")
         return

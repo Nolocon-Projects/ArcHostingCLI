@@ -2,27 +2,25 @@
 import json
 from pathlib import Path
 import keyring
-
-DATA_DIR = Path.home() / ".arcHost"
-CONFIG_FILE = DATA_DIR / "config.json"
+from constants import *
 
 
-def load_config():
-    if not CONFIG_FILE.exists():
+def load_config(file):
+    if not file.exists():
         return {}
     try:
-        return json.loads(CONFIG_FILE.read_text())
+        return json.loads(file.read_text())
     except Exception:
         return {}
 import json
 
-def save_config(updates: dict):
-    CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+def save_config(file, updates: dict):
+    file.parent.mkdir(parents=True, exist_ok=True)
 
     # Vorhandene Config laden
-    if CONFIG_FILE.exists():
+    if file.exists():
         try:
-            config = json.loads(CONFIG_FILE.read_text())
+            config = json.loads(file.read_text())
         except (json.JSONDecodeError, OSError):
             config = {}
     else:
@@ -32,7 +30,7 @@ def save_config(updates: dict):
     config.update(updates)
 
     # Gesamte Config zurückschreiben
-    CONFIG_FILE.write_text(json.dumps(config, indent=4))
+    file.write_text(json.dumps(config, indent=4))
 
 
 def save_keyring(name: str, key: str):

@@ -4,7 +4,9 @@ import typer
 from rich.console import Console
 import config 
 import datetime
-import github_api  
+import github_api
+from constants import *
+
 provider_app = typer.Typer()
 console = Console()
 
@@ -21,7 +23,7 @@ def git_config_get(key: str) -> str:
 
 @provider_app.command("show-current")
 def show_provider():
-    provider = config.load_config().get("provider_url")
+    provider = config.load_config(CONFIG_FILE).get("provider_url")
 
     if provider:
         console.print(f"Current Provider URL: {provider}")
@@ -36,10 +38,10 @@ def init_provider_cfg(provider_url: str, token):
         "last_updated": datetime.datetime.now().isoformat()
     }
     config.save_keyring(provider_url, token)
-    config.save_config(provider_cfg)
+    config.save_config(CONFIG_FILE, provider_cfg)
 
 def load_provider_cfg():
-    cfg = config.load_config()
+    cfg = config.load_config(CONFIG_FILE)
     provider_url = cfg.get("provider_url")
     if not provider_url:
         raise ValueError("Provider URL not found in config")
