@@ -85,6 +85,7 @@ def is_locked(server_address):
     lock_file = server_dir / "server.lock"
     return lock_file.exists() 
 
+@server_app.command("run")
 def run_server():
     config_data = config.load_config(CONFIG_FILE)
     server_address = config_data.get("server_address")

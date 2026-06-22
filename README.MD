@@ -6,6 +6,7 @@ ArcHosting CLI is a simple tool that uses Git to synchronize a server between di
 
 * Python (if using the source code instead of a release) (Python 3.14.5 recommended)
 * Git
+* Git LFS
 * A GitHub account for cloud services
 
 ## Installation

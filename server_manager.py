@@ -222,4 +222,6 @@ def set_execution_command(command: str | None = None):
         return
     config_data["execution_command"] = command
     config.save_config(config_file, config_data)
+    commit_changes("Updated Server Execution Command")
+    upload_changes()
     console.print(f"Execution command set to: {command}")
