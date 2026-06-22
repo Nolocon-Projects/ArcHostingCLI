@@ -1,4 +1,6 @@
 # Arc CLI - Server
+import subprocess
+
 import typer
 from rich.console import Console
 import config 
@@ -84,7 +86,7 @@ def is_locked(server_address):
     return lock_file.exists() 
 
 def run_server():
-    config_data = config.load_config(CONFIG_FILEbb)
+    config_data = config.load_config(CONFIG_FILE)
     server_address = config_data.get("server_address")
     if server_address is None:
         console.print("No server repository set. Please run 'arc server select' first.")
@@ -98,4 +100,14 @@ def run_server():
     if not config_file.exists():
         console.print("Server repository is not initialized. Please run 'arc server init' first.")
         return
-    
+    execution_command = config.load_config(config_file).get("execution_command")
+
+    if not isinstance(execution_command, str):
+        console.print("Invalid execution command in config")
+        return
+
+    subprocess.run(
+        execution_command,
+        shell=True,
+        cwd=server_dir
+    )

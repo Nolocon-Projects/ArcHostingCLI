@@ -100,31 +100,34 @@ def create_server_repo(
     name: str | None = None,
 ):
     token = config.get_keyring("https://github.com")
-
     if token is None:
         console.print(
             "GitHub token not found. Please run 'arc provider setup' first."
         )
         return
-
     if name is None:
         name = console.input("Server Repository Name: ")
-
     server_address = github_api.create_github_repo(
         token,
         name,
         private=True
     )
-
     console.print(
         f"Server Repository created: {server_address}"
     )
-
     set_server(server_address)
     update_local_server()
-
     owner, repo = repo_url_to_name(server_address)
-
+    init_server(server_address)
+    
+@server_app.command("init")
+def init_server(server_address: str | None = None):
+    if server_address is None:
+        server_address = config.load_config(CONFIG_FILE).get("server_address")
+        if server_address is None:
+            console.print("No server repository set. Please run 'arc server select' first or provide a server address.")
+            return
+    owner, repo = repo_url_to_name(server_address)
     file = (
         config.DATA_DIR
         / "repositories"
@@ -132,20 +135,17 @@ def create_server_repo(
         / repo
         / "arcHost.config"
     )
-
     file_data = {
         "version": APP_VERSION,
     }
-
     file.write_text(
         json.dumps(file_data, indent=4),
         encoding="utf-8"
     )
-
     commit_changes("Base ArcHost Config Creation")
     upload_changes()
-
     console.print("Server repository initialized.")
+    
 @server_app.command("invite")
 def invite_user(username: str):
     repo_url = config.load_config(CONFIG_FILE).get("server_address")
@@ -198,3 +198,28 @@ def upload_changes():
     subprocess.run(["git", "-C", str(repository_path), "push"], check=True)
     
 
+@server_app.command("set-execution-command")
+def set_execution_command(command: str | None = None):
+    repo_url = config.load_config(CONFIG_FILE).get("server_address")
+    if repo_url is None:
+        console.print(
+            "No server repository set. Please run 'arc server select' first."
+        )
+        return
+    if command is None:
+        command = console.input("Execution Command: ")
+    user, repo = repo_url_to_name(repo_url)
+    server_dir = config.DATA_DIR / "repositories" / user / repo
+    config_file = server_dir / "arcHost.config"
+    if not config_file.exists():
+        console.print(
+            "Server repository is not initialized. Please run 'arc server init' first."
+        )
+        return
+    config_data = config.load_config(config_file)
+    if not isinstance(config_data, dict):
+        console.print("Invalid config format")
+        return
+    config_data["execution_command"] = command
+    config.save_config(config_file, config_data)
+    console.print(f"Execution command set to: {command}")
