@@ -1,6 +1,5 @@
 # Arc CLI Configuration management
 import json
-from pathlib import Path
 import keyring
 from constants import *
 
@@ -10,9 +9,8 @@ def load_config(file):
         return {}
     try:
         return json.loads(file.read_text())
-    except Exception:
+    except (json.JSONDecodeError, OSError):
         return {}
-import json
 
 def save_config(file, updates: dict):
     file.parent.mkdir(parents=True, exist_ok=True)

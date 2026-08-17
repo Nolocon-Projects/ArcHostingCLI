@@ -1,5 +1,6 @@
 # Arc CLI - Server
 import subprocess
+import ast
 
 import typer
 from rich.console import Console
@@ -7,7 +8,6 @@ import config
 import datetime
 from server_app import server_app, get_local_path
 from server_manager import update_local_server, commit_changes, upload_changes
-import github_api
 from constants import *
 
 console = Console()  
@@ -57,8 +57,15 @@ def remove_lock(server_address, force: bool = False):
     lock_file = server_dir / "server.lock"
     update_local_server()
     if lock_file.exists():
-        jjson_data = eval(lock_file.read_text())
-        locked_by = jjson_data.get("locked_by", "unknown")
+        try:
+            lock_data = ast.literal_eval(lock_file.read_text())
+        except (ValueError, SyntaxError):
+            console.print("<red>ERROR</red>: Invalid lock file format.")
+            return
+        if not isinstance(lock_data, dict):
+            console.print("<red>ERROR</red>: Invalid lock file format.")
+            return
+        locked_by = lock_data.get("locked_by", "unknown")
         if locked_by != config.load_config(CONFIG_FILE).get("username", "unknown") and not force:
             console.print(f"<red>ERROR</red>: Lock file is owned by '{locked_by}'. Use --force to override.")
             return
