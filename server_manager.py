@@ -6,7 +6,7 @@ from rich.console import Console
 import config 
 import datetime
 import github_api
-from server_app import server_app, repo_url_to_name, get_local_path
+from server_app import server_app, get_local_path
 from constants import *
 console = Console()
 
@@ -19,12 +19,6 @@ def main(ctx: typer.Context):
 def set_server_command(server_address):
     set_server(server_address)
     console.print(f"Server address set to: {server_address}")
-    # Check if local Snapshot exists
-    repo_url = config.load_config(CONFIG_FILE).get("server_address")
-    if repo_url is None:
-        console.print("No server repository set. Please run 'arc server select' first.")
-        return
-    repository_path = get_local_path(repo_url)
 
 def set_server(server_address: str):
     if server_address.endswith(".git"):
@@ -69,16 +63,17 @@ def update_local_server():
         subprocess.run(["git", "-C", str(repository_path), "pull"], check=True)
     else:
         console.print(f"Downloading local repository at {repository_path}")
-        clone_server_repo(config.get_keyring("https://github.com"), repo_url)
+        clone_server_repo(repo_url)
         return
 
 @server_app.command("download")
 def download_server():
     update_local_server()
 
-def clone_server_repo(token: str, repo_url: str):
-    token = config.get_keyring("https://github.com")
-    if token is None:
+def clone_server_repo(repo_url: str):
+    try:
+        config.get_keyring("https://github.com")
+    except ValueError:
         console.print("GitHub token not found. Please run 'arc provider setup' first.")
         return
     if repo_url is None:
@@ -113,7 +108,6 @@ def create_server_repo(
     )
     set_server(server_address)
     update_local_server()
-    owner, repo = repo_url_to_name(server_address)
     init_server(server_address)
     
 @server_app.command("init")
