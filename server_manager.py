@@ -6,7 +6,7 @@ from rich.console import Console
 import config 
 import datetime
 import github_api
-from server_app import server_app, repo_url_to_name
+from server_app import server_app, repo_url_to_name, get_local_path
 from constants import *
 console = Console()
 
@@ -24,8 +24,7 @@ def set_server_command(server_address):
     if repo_url is None:
         console.print("No server repository set. Please run 'arc server select' first.")
         return
-    user, repo = repo_url_to_name(repo_url)
-    repository_path = config.DATA_DIR / "repositories" / user / repo
+    repository_path = get_local_path(repo_url)
 
 def set_server(server_address: str):
     if server_address.endswith(".git"):
@@ -64,8 +63,7 @@ def update_local_server():
     if repo_url is None:
         console.print("No server repository set. Please run 'arc server select' first.")
         return
-    user, repo = repo_url_to_name(repo_url)
-    repository_path = config.DATA_DIR / "repositories" / user / repo
+    repository_path = get_local_path(repo_url)
     if repository_path.exists():
         console.print(f"Updating local repository at {repository_path}")
         subprocess.run(["git", "-C", str(repository_path), "pull"], check=True)
@@ -87,9 +85,7 @@ def clone_server_repo(token: str, repo_url: str):
         console.print("No server repository set. Please run 'arc server select' first.")
         return
     
-    user, repo = repo_url_to_name(repo_url)
-
-    download_path = config.DATA_DIR / "repositories" / user / repo
+    download_path = get_local_path(repo_url)
     
     subprocess.run(["git", "clone", repo_url, str(download_path)], check=True)
     
@@ -127,12 +123,9 @@ def init_server(server_address: str | None = None):
         if server_address is None:
             console.print("No server repository set. Please run 'arc server select' first or provide a server address.")
             return
-    owner, repo = repo_url_to_name(server_address)
+    server_dir = get_local_path(server_address)
     file = (
-        config.DATA_DIR
-        / "repositories"
-        / owner
-        / repo
+        server_dir
         / "arcHost.config"
     )
     file_data = {
@@ -176,8 +169,7 @@ def commit_changes(message: str = "No commit message provided"):
     if repo_url is None:
         console.print("No server repository set. Please run 'arc server select' first.")
         return
-    user, repo = repo_url_to_name(repo_url)
-    repository_path = config.DATA_DIR / "repositories" / user / repo
+    repository_path = get_local_path(repo_url)
     if not repository_path.exists():
         console.print(f"Local repository not found at {repository_path}. Please run 'arc server fetch' first.")
         return
@@ -190,8 +182,7 @@ def upload_changes():
     if repo_url is None:
         console.print("No server repository set. Please run 'arc server select' first.")
         return
-    user, repo = repo_url_to_name(repo_url)
-    repository_path = config.DATA_DIR / "repositories" / user / repo
+    repository_path = get_local_path(repo_url)
     if not repository_path.exists():
         console.print(f"Local repository not found at {repository_path}. Please run 'arc server fetch' first.")
         return
@@ -208,8 +199,7 @@ def set_execution_command(command: str | None = None):
         return
     if command is None:
         command = console.input("Execution Command: ")
-    user, repo = repo_url_to_name(repo_url)
-    server_dir = config.DATA_DIR / "repositories" / user / repo
+    server_dir = get_local_path(repo_url)
     config_file = server_dir / "arcHost.config"
     if not config_file.exists():
         console.print(
