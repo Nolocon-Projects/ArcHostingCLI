@@ -5,7 +5,7 @@ import typer
 from rich.console import Console
 import config 
 import datetime
-from server_app import server_app, repo_url_to_name
+from server_app import server_app, get_local_path
 from server_manager import update_local_server, commit_changes, upload_changes
 import github_api
 from constants import *
@@ -21,8 +21,7 @@ def write_lock_file(server_address):
     if server_address is None:
         console.print("No server repository set. Please run 'arc server select' first.")
         return
-    user, repo = repo_url_to_name(server_address)
-    server_dir = config.DATA_DIR / "repositories" / user / repo
+    server_dir = get_local_path(server_address)
     lock_file = server_dir / "server.lock"
     if lock_file.exists():
         console.print(f"<red>ERROR</red>: Lock file already exists at {lock_file}. Server is already running.")
@@ -54,8 +53,7 @@ def remove_lock(server_address, force: bool = False):
     if server_address is None:
         console.print("No server repository set. Please run 'arc server select' first.")
         return
-    user, repo = repo_url_to_name(server_address)
-    server_dir = config.DATA_DIR / "repositories" / user / repo
+    server_dir = get_local_path(server_address)
     lock_file = server_dir / "server.lock"
     update_local_server()
     if lock_file.exists():
@@ -80,8 +78,7 @@ def is_locked(server_address):
     if server_address is None:
         console.print("No server repository set. Please run 'arc server select' first.")
         return False
-    user, repo = repo_url_to_name(server_address)
-    server_dir = config.DATA_DIR / "repositories" / user / repo
+    server_dir = get_local_path(server_address)
     lock_file = server_dir / "server.lock"
     return lock_file.exists() 
 
@@ -95,8 +92,7 @@ def run_server():
     if is_locked(server_address):
         console.print("Server is already running. Please stop it before starting a new one.")
         return
-    user, repo = repo_url_to_name(server_address)
-    server_dir = config.DATA_DIR / "repositories" / user / repo
+    server_dir = get_local_path(server_address)
     config_file = server_dir / "arcHost.config"
     if not config_file.exists():
         console.print("Server repository is not initialized. Please run 'arc server init' first.")
