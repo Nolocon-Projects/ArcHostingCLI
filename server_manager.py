@@ -58,6 +58,7 @@ def update_local_server():
         console.print("No server repository set. Please run 'arc server select' first.")
         return
     repository_path = get_local_path(repo_url)
+    assert repository_path is not None
     if repository_path.exists():
         console.print(f"Updating local repository at {repository_path}")
         subprocess.run(["git", "-C", str(repository_path), "pull"], check=True)
@@ -118,6 +119,8 @@ def init_server(server_address: str | None = None):
             console.print("No server repository set. Please run 'arc server select' first or provide a server address.")
             return
     server_dir = get_local_path(server_address)
+    if server_dir is None:
+        raise RuntimeError("Server directory could not be determined")
     file = (
         server_dir
         / "arcHost.config"
@@ -164,6 +167,7 @@ def commit_changes(message: str = "No commit message provided"):
         console.print("No server repository set. Please run 'arc server select' first.")
         return
     repository_path = get_local_path(repo_url)
+    assert repository_path is not None
     if not repository_path.exists():
         console.print(f"Local repository not found at {repository_path}. Please run 'arc server fetch' first.")
         return
@@ -177,6 +181,7 @@ def upload_changes():
         console.print("No server repository set. Please run 'arc server select' first.")
         return
     repository_path = get_local_path(repo_url)
+    assert repository_path is not None
     if not repository_path.exists():
         console.print(f"Local repository not found at {repository_path}. Please run 'arc server fetch' first.")
         return
@@ -194,6 +199,9 @@ def set_execution_command(command: str | None = None):
     if command is None:
         command = console.input("Execution Command: ")
     server_dir = get_local_path(repo_url)
+
+    if server_dir is None:
+        raise RuntimeError("Server directory could not be determined")
     config_file = server_dir / "arcHost.config"
     if not config_file.exists():
         console.print(

@@ -22,6 +22,8 @@ def write_lock_file(server_address):
         console.print("No server repository set. Please run 'arc server select' first.")
         return
     server_dir = get_local_path(server_address)
+    if server_dir is None:
+        raise RuntimeError("Server directory could not be determined")
     lock_file = server_dir / "server.lock"
     if lock_file.exists():
         console.print(f"<red>ERROR</red>: Lock file already exists at {lock_file}. Server is already running.")
@@ -54,6 +56,8 @@ def remove_lock(server_address, force: bool = False):
         console.print("No server repository set. Please run 'arc server select' first.")
         return
     server_dir = get_local_path(server_address)
+    if server_dir is None:
+        raise RuntimeError("Server directory could not be determined")
     lock_file = server_dir / "server.lock"
     update_local_server()
     if lock_file.exists():
@@ -86,6 +90,8 @@ def is_locked(server_address):
         console.print("No server repository set. Please run 'arc server select' first.")
         return False
     server_dir = get_local_path(server_address)
+    if server_dir is None:
+        raise RuntimeError("Server directory could not be determined")
     lock_file = server_dir / "server.lock"
     return lock_file.exists() 
 
@@ -100,6 +106,8 @@ def run_server():
         console.print("Server is already running. Please stop it before starting a new one.")
         return
     server_dir = get_local_path(server_address)
+    if server_dir is None:
+            raise RuntimeError("Server directory could not be determined")
     config_file = server_dir / "arcHost.config"
     if not config_file.exists():
         console.print("Server repository is not initialized. Please run 'arc server init' first.")

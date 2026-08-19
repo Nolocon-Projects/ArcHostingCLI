@@ -1,0 +1,11 @@
+Github Max File Limit: 100Mib
+
+
+LFS:
+
+Github Free: 2 GB
+Github Pro: 2 GB
+Github Team: 4 GB
+Enterprise Cloud: 5 GB
+
+Snapshot: 2GB
