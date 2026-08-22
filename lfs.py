@@ -1,4 +1,43 @@
 from pathlib import Path
+import re
+
+
+def merge_all_splits(directory):
+    pattern = re.compile(r"^(.+)\.part\d+$")
+    split_files = {}
+
+    for path in Path(directory).rglob("*"):
+        if not path.is_file():
+            continue
+
+        match = pattern.match(path.name)
+
+        if not match:
+            continue
+
+        filename = match.group(1)
+
+        split_files.setdefault(path.parent, set()).add(filename)
+
+    for path, filenames in split_files.items():
+        for filename in filenames:
+            merge_files(
+                path,
+                filename,
+                delete_afterwards=True
+            )
+
+
+def split_all_files(directory, max_chunk_size_mb):
+    files = list(Path(directory).rglob("*"))
+
+    for path in files:
+        if path.is_file() and path.stat().st_size > max_chunk_size_mb * 1024 * 1024:
+            split_file(
+                path,
+                delete_afterwards=True,
+                max_chunk_size_mb=max_chunk_size_mb
+            )
 
 
 def get_oversized_files(directory, min_size_mb):
@@ -26,7 +65,15 @@ def split_file(file_path, delete_afterwards=False, max_chunk_size_mb=50):
             if not data:
                 break
 
-            part_path = file_path.parent / f"{file_path.name}.part{part_number:02d}"
+            part_path = (
+                file_path.parent /
+                f"{file_path.name}.part{part_number:02d}"
+            )
+
+            if part_path.exists():
+                raise FileExistsError(
+                    f"Part already exists: {part_path}"
+                )
 
             with part_path.open("wb") as part:
                 part.write(data)
@@ -36,51 +83,70 @@ def split_file(file_path, delete_afterwards=False, max_chunk_size_mb=50):
     if delete_afterwards:
         file_path.unlink()
 
-    print(f"File successfully split into {part_number - 1} parts.")
+    print(
+        f"File successfully split into "
+        f"{part_number - 1} parts."
+    )
 
 
-def merge_files(path, filename, delete_afterwards=False, buffer_size_mb=50):
+def merge_files(
+    path,
+    filename,
+    delete_afterwards=False,
+    buffer_size_mb=50
+):
     path = Path(path)
     output_path = path / filename
     buffer_size = buffer_size_mb * 1024 * 1024
 
+    pattern = re.compile(
+        rf"^{re.escape(filename)}\.part(\d+)$"
+    )
+
     parts = []
-    part_number = 1
 
-    while True:
-        part_path = path / f"{filename}.part{part_number:02d}"
-
+    for part_path in path.iterdir():
         if not part_path.is_file():
-            break
+            continue
 
-        parts.append(part_path)
-        part_number += 1
+        match = pattern.match(part_path.name)
+
+        if not match:
+            continue
+
+        part_number = int(match.group(1))
+        parts.append((part_number, part_path))
 
     if not parts:
         raise FileNotFoundError(
             f"No parts found for '{filename}'."
         )
 
-    expected = 1
+    parts.sort(key=lambda item: item[0])
 
-    for part in parts:
-        current = int(part.name.rsplit(".part", 1)[1])
-
-        if current != expected:
+    for expected, (part_number, _) in enumerate(parts, start=1):
+        if part_number != expected:
             raise ValueError(
-                f"Missing Part: {filename}.part{expected:02d}"
+                f"Missing Part: "
+                f"{filename}.part{expected:02d}"
             )
 
-        expected += 1
+    if output_path.exists():
+        raise FileExistsError(
+            f"Output file already exists: {output_path}"
+        )
 
     with output_path.open("wb") as output:
-        for part_path in parts:
+        for _, part_path in parts:
             with part_path.open("rb") as part:
                 while chunk := part.read(buffer_size):
                     output.write(chunk)
 
     if delete_afterwards:
-        for part_path in parts:
+        for _, part_path in parts:
             part_path.unlink()
 
-    print(f"File successfully merged from {len(parts)} parts.")
+    print(
+        f"File successfully merged from "
+        f"{len(parts)} parts."
+    )
