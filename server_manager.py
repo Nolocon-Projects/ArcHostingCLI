@@ -7,6 +7,7 @@ import config
 import datetime
 import github_api
 from server_app import server_app, get_local_path
+from lfs import get_oversized_files
 from constants import *
 console = Console()
 
@@ -171,6 +172,11 @@ def commit_changes(message: str = "No commit message provided"):
     if not repository_path.exists():
         console.print(f"Local repository not found at {repository_path}. Please run 'arc server fetch' first.")
         return
+
+    # Handle Files too large for Git LFS by splitting them.
+    example_code = ""
+    # Handle Files too large for  Github tracking by adding them to Git LFS
+    example_code = ""
     subprocess.run(["git", "-C", str(repository_path), "add", "."], check=True)
     subprocess.run(["git", "-C", str(repository_path), "commit", "-m", f"{message} - {datetime.datetime.now()}"], check=True)
     
