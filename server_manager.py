@@ -7,7 +7,7 @@ import config
 import datetime
 import github_api
 from server_app import server_app, get_local_path
-from lfs import get_oversized_files
+from lfs import *
 from constants import *
 console = Console()
 
@@ -174,9 +174,19 @@ def commit_changes(message: str = "No commit message provided"):
         return
 
     # Handle Files too large for Git LFS by splitting them.
-    example_code = ""
+    for oversized_file in get_oversized_files(repository_path, min_size_mib=2000):
+        split_file(
+            oversized_file,
+            delete_afterwards=True,
+            max_chunk_size_mib=1000  
+        )
+        console.print(f"Split oversized file: {oversized_file} into chunks of 1000MB and deleted the original file.")
     # Handle Files too large for  Github tracking by adding them to Git LFS
-    example_code = ""
+    # Add every file >= 100 MB to Git LFS.
+    github_api.add_large_files_to_lfs(
+        repository_path,
+        min_size_mib=100
+    )
     subprocess.run(["git", "-C", str(repository_path), "add", "."], check=True)
     subprocess.run(["git", "-C", str(repository_path), "commit", "-m", f"{message} - {datetime.datetime.now()}"], check=True)
     

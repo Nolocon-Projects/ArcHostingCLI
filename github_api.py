@@ -6,6 +6,7 @@ import subprocess
 import shutil
 from rich.console import Console
 from urllib.parse import urlparse
+from pathlib import Path
 
 CLIENT_ID = "Ov23liAVBP84OXx02dwF"
 
@@ -203,3 +204,40 @@ def get_github_username(token: str) -> str:
     data = response.json()
 
     return data.get("login")
+
+
+def add_large_files_to_lfs(repository_path: Path, min_size_mib: int = 100):
+
+    repository_path = Path(repository_path)
+    min_size_bytes = min_size_mib * 1024 * 1024
+
+    # Make sure Git LFS is initialized for this repository.
+    subprocess.run(
+        ["git", "-C", str(repository_path), "lfs", "install"],
+        check=True
+    )
+
+    for path in repository_path.rglob("*"):
+        if not path.is_file():
+            continue
+
+        # Ignore files inside .git.
+        if ".git" in path.parts:
+            continue
+
+        if path.stat().st_size < min_size_bytes:
+            continue
+
+        relative_path = path.relative_to(repository_path).as_posix()
+
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(repository_path),
+                "lfs",
+                "track",
+                relative_path
+            ],
+            check=True
+        )

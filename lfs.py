@@ -28,28 +28,28 @@ def merge_all_splits(directory):
             )
 
 
-def split_all_files(directory, max_chunk_size_mb):
+def split_all_files(directory, max_chunk_size_mib):
     files = list(Path(directory).rglob("*"))
 
     for path in files:
-        if path.is_file() and path.stat().st_size > max_chunk_size_mb * 1024 * 1024:
+        if path.is_file() and path.stat().st_size > max_chunk_size_mib * 1024 * 1024:
             split_file(
                 path,
                 delete_afterwards=True,
-                max_chunk_size_mb=max_chunk_size_mb
+                max_chunk_size_mib=max_chunk_size_mib
             )
 
 
-def get_oversized_files(directory, min_size_mb):
-    min_size = min_size_mb * 1024 * 1024
+def get_oversized_files(directory, min_size_mib):
+    min_size = min_size_mib * 1024 * 1024
 
     for path in Path(directory).rglob("*"):
         if path.is_file() and path.stat().st_size > min_size:
             yield path
 
 
-def split_file(file_path, delete_afterwards=False, max_chunk_size_mb=50):
-    chunk_size = max_chunk_size_mb * 1024 * 1024
+def split_file(file_path, delete_afterwards=False, max_chunk_size_mib=50):
+    chunk_size = max_chunk_size_mib * 1024 * 1024
 
     file_path = Path(file_path)
 
