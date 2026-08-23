@@ -19,18 +19,12 @@ import server_runner
 app.add_typer(server_app, name="server")
 
 
-BRAND = r"""
-  ▄▄▄▄                ▄▄▄▄▄▄▄ ▄▄▄      ▄▄▄▄▄
-▄██▀▀██▄             ███▀▀▀▀▀ ███       ███
-███  ███ ████▄ ▄████ ███      ███       ███
-███▀▀███ ██ ▀▀ ██    ███      ███       ███
-███  ███ ██    ▀████ ▀███████ ████████ ▄███▄
-"""
+
 
 
 def show_home():
     console.print(Panel.fit(BRAND, title="ArcCLI", subtitle=f"v{APP_VERSION}"))
-    console.print("PLACEHOLDER")
+    console.print("Play together easily")
 
 
 @app.callback(invoke_without_command=True)
