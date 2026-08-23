@@ -7,8 +7,7 @@ import shutil
 from rich.console import Console
 from urllib.parse import urlparse
 from pathlib import Path
-
-CLIENT_ID = "Ov23liAVBP84OXx02dwF"
+from constants import GH_CLIENT_ID as CLIENT_ID
 
 console = Console()
 
