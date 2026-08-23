@@ -10,6 +10,7 @@ import datetime
 from server_app import server_app, get_local_path
 from server_manager import update_local_server, commit_changes, upload_changes
 from constants import *
+from lfs import *
 
 console = Console()  
 
@@ -97,6 +98,10 @@ def is_locked(server_address):
     lock_file = server_dir / "server.lock"
     return lock_file.exists() 
 
+@server_app.command("prepare")
+def prepare_server_environment(server_directory):
+    merge_all_splits(server_directory)    
+
 @server_app.command("run")
 def run_server():
     config_data = config.load_config(CONFIG_FILE)
@@ -114,6 +119,8 @@ def run_server():
     if not config_file.exists():
         console.print("Server repository is not initialized. Please run 'arc server init' first.")
         return
+    write_lock_file(server_address)
+    prepare_server_environment(server_dir)
     execution_command = config.load_config(config_file).get("execution_command")
 
     if not isinstance(execution_command, str):
@@ -134,3 +141,5 @@ def run_server():
         console.print(f"Command failed with exit code {e.returncode}: {e}")
     except Exception as e:
         console.print(f"Failed to run command: {e}")
+    # After execution, remove the lock file to indicate the server has stopped.
+    remove_lock(server_address)
