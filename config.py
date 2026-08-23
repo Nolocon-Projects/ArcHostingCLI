@@ -35,9 +35,9 @@ def save_keyring(name: str, key: str):
     keyring.set_password("ArcHosting", name, key)  
 
 def get_keyring(name: str) -> str:
+    # Return None when not found to allow callers to handle missing tokens
+    # without relying on exceptions for control flow.
     value = keyring.get_password("ArcHosting", name)
-    if value is None:
-        raise ValueError(f"Key '{name}' not found in keyring")
     return value
 
 def delete_keyring(name: str):

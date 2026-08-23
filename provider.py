@@ -6,6 +6,7 @@ import config
 import datetime
 import github_api
 from constants import *
+import getpass
 
 provider_app = typer.Typer()
 console = Console()
@@ -69,9 +70,9 @@ def init_provider(
             token = github_api.prompt_github_token_oauth()
     else:
         if token is None:
-            token = console.input(
-                "Personal Access Token: (Leave blank for none): "
-            )
+            # Read token without echoing to the terminal for security
+            t = getpass.getpass("Personal Access Token (input hidden, leave blank for none): ")
+            token = t if t != "" else None
 
     init_provider_cfg(provider, token)
 

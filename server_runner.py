@@ -1,6 +1,7 @@
 # Arc CLI - Server
 import subprocess
-import ast
+import json
+import shlex
 
 import typer
 from rich.console import Console
@@ -34,7 +35,8 @@ def write_lock_file(server_address):
             "locked_by": config.load_config(CONFIG_FILE).get("username", "unknown"),
             "timestamp": datetime.datetime.now().isoformat(),
         }
-        lock_file.write_text(str(lock_data))
+        # Persist lock information as JSON for safe, consistent parsing.
+        lock_file.write_text(json.dumps(lock_data), encoding="utf-8")
         console.print(f"Lock file created at {lock_file}. Server is now running.")
     commit_changes("Arc Server Lockfile Creation")
     upload_changes()
@@ -62,8 +64,8 @@ def remove_lock(server_address, force: bool = False):
     update_local_server()
     if lock_file.exists():
         try:
-            lock_data = ast.literal_eval(lock_file.read_text())
-        except (ValueError, SyntaxError):
+            lock_data = json.loads(lock_file.read_text())
+        except (ValueError, json.JSONDecodeError):
             console.print("<red>ERROR</red>: Invalid lock file format.")
             return
         if not isinstance(lock_data, dict):
@@ -117,9 +119,18 @@ def run_server():
     if not isinstance(execution_command, str):
         console.print("Invalid execution command in config")
         return
+    # Show the command and require explicit confirmation before executing.
+    console.print(f"Execution command: {execution_command}")
+    confirm = console.input("Do you want to run this command? (y/N): ")
+    if confirm.lower() != "y":
+        console.print("Execution aborted by user.")
+        return
 
-    subprocess.run(
-        execution_command,
-        shell=True,
-        cwd=server_dir
-    )
+    # Execute without shell to avoid shell injection risks. Split safely.
+    try:
+        cmd_list = shlex.split(execution_command)
+        subprocess.run(cmd_list, shell=False, cwd=server_dir, check=True)
+    except subprocess.CalledProcessError as e:
+        console.print(f"Command failed with exit code {e.returncode}: {e}")
+    except Exception as e:
+        console.print(f"Failed to run command: {e}")

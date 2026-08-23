@@ -1,5 +1,6 @@
 # Arc CLI - Server
 import json
+import shutil
 import subprocess
 import typer
 from rich.console import Console
@@ -158,11 +159,19 @@ def invite_user(username: str):
     
 
 @server_app.command("save")
-def save_server():
-    commit_changes("Arc Server Execution Changes")
+def save_server(
+    force: bool = typer.Option(
+        False,
+        "--force",
+        "-f",
+        help="Skip confirmation prompts and proceed with destructive split operations."
+    )
+):
+    commit_changes("Arc Server Execution Changes", force=force)
 
 
-def commit_changes(message: str = "No commit message provided"):
+
+def commit_changes(message: str = "No commit message provided", force: bool = False):
     repo_url = config.load_config(CONFIG_FILE).get("server_address")
     if repo_url is None:
         console.print("No server repository set. Please run 'arc server select' first.")
@@ -175,12 +184,19 @@ def commit_changes(message: str = "No commit message provided"):
 
     # Handle Files too large for Git LFS by splitting them.
     for oversized_file in get_oversized_files(repository_path, min_size_mib=2000):
+        if not force:
+            confirm = console.input(
+                f"File {oversized_file} is larger than 2GB. Do you want to split it into smaller chunks? (y/n): "
+            )
+            if confirm.lower() != "y":
+                console.print(f"Skipping file: {oversized_file}")
+                continue
+
         split_file(
             oversized_file,
             delete_afterwards=True,
-            max_chunk_size_mib=1000  
+            max_chunk_size_mib=500
         )
-        console.print(f"Split oversized file: {oversized_file} into chunks of 1000MB and deleted the original file.")
     # Handle Files too large for  Github tracking by adding them to Git LFS
     # Add every file >= 100 MB to Git LFS.
     github_api.add_large_files_to_lfs(
