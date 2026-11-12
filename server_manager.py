@@ -7,10 +7,19 @@ from rich.console import Console
 import config 
 import datetime
 import github_api
+from urllib.parse import quote, urlsplit, urlunsplit
 from server_app import server_app, get_local_path
 from lfs import *
 from constants import *
 console = Console()
+
+def authenticated_repo_url(repo_url: str, access_token: str) -> str:
+    parsed_url = urlsplit(repo_url)
+    return urlunsplit(
+        parsed_url._replace(
+            netloc=f"oauth2:{quote(access_token, safe='')}@{parsed_url.hostname}"
+        )
+    )
 
 @server_app.callback(invoke_without_command=True)
 def main(ctx: typer.Context):
@@ -59,33 +68,47 @@ def update_local_server():
     if repo_url is None:
         console.print("No server repository set. Please run 'arc server select' first.")
         return
+    gh_access_token = config.get_keyring("https://github.com")
+    if not gh_access_token:
+        console.print("GitHub token not found. Please run 'arc provider setup' first.")
+        return
+
+    authenticated_url = authenticated_repo_url(repo_url, gh_access_token)
     repository_path = get_local_path(repo_url)
     assert repository_path is not None
     if repository_path.exists():
         console.print(f"Updating local repository at {repository_path}")
-        subprocess.run(["git", "-C", str(repository_path), "pull"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repository_path), "pull", authenticated_url],
+            check=True,
+        )
     else:
         console.print(f"Downloading local repository at {repository_path}")
-        clone_server_repo(repo_url)
+        clone_server_repo(repo_url, authenticated_url)
         return
 
 @server_app.command("download")
 def download_server():
     update_local_server()
 
-def clone_server_repo(repo_url: str):
-    try:
-        config.get_keyring("https://github.com")
-    except ValueError:
-        console.print("GitHub token not found. Please run 'arc provider setup' first.")
-        return
+def clone_server_repo(repo_url: str, authenticated_url: str | None = None):
     if repo_url is None:
         console.print("No server repository set. Please run 'arc server select' first.")
         return
-    
+
+    if authenticated_url is None:
+        access_token = config.get_keyring("https://github.com")
+        if not access_token:
+            console.print("GitHub token not found. Please run 'arc provider setup' first.")
+            return
+        authenticated_url = authenticated_repo_url(repo_url, access_token)
+
     download_path = get_local_path(repo_url)
-    
-    subprocess.run(["git", "clone", repo_url, str(download_path)], check=True)
+    if download_path is None:
+        console.print("No server repository set. Please run 'arc server select' first.")
+        return
+
+    subprocess.run(["git", "clone", authenticated_url, str(download_path)], check=True)
     
     
     

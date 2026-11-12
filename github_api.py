@@ -66,7 +66,7 @@ def copy_to_clipboard(text: str) -> bool:
         return False
 
 
-def prompt_github_token_oauth() -> str:
+def prompt_0_oauth() -> str:
     response = requests.post(
         "https://github.com/login/device/code",
         headers={"Accept": "application/json"},

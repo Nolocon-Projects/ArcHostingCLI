@@ -2,3 +2,6 @@
 __pycache__/
 *.pyc
 .arc_temp_split/
+__pycache__/config.cpython-314.pyc
+__pycache__/github_api.cpython-314.pyc
+__pycache__/provider.cpython-314.pyc

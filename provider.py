@@ -22,7 +22,7 @@ def git_config_get(key: str) -> str:
 
 
 
-@provider_app.command("show-current")
+@provider_app.command("current")
 def show_provider():
     provider = config.load_config(CONFIG_FILE).get("provider_url")
 
